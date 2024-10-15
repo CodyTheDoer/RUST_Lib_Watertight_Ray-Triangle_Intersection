@@ -1,7 +1,10 @@
 [package]
-name = "RUST_Lib_Watertight_Ray-Triangle_Intersection-main"
+name = "wrti_library"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 glam = "0.29"  
+
+[features]
+default = []
