@@ -1,13 +1,36 @@
 use glam::Vec3;
 
-struct Hit {
+pub struct Hit {
     u: f32,
     v: f32,
     w: f32,
     t: f32,
 }
 
-fn watertight_ray_triangle_intersection(
+impl Hit {
+    pub fn as_tuple(&self) -> (f32, f32, f32, f32) {
+        (self.u, self.v, self.w, self.t)
+    }
+    
+    // Getter methods for each field
+    pub fn u(&self) -> f32 {
+        self.u
+    }
+
+    pub fn v(&self) -> f32 {
+        self.v
+    }
+
+    pub fn w(&self) -> f32 {
+        self.w
+    }
+
+    pub fn t(&self) -> f32 {
+        self.t
+    }
+}
+
+pub fn watertight_ray_triangle_intersection(
     origin: Vec3,                   // Ray origin
     direction: Vec3,                // Ray direction
     triangle: (Vec3, Vec3, Vec3),   // Triangle vertices
@@ -146,4 +169,70 @@ fn watertight_ray_triangle_intersection(
     };
 
     Some(hit)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn internal_test_intersection_direct() {
+        let origin = Vec3::new(0.0, 0.0, 0.0);
+        let direction = Vec3::new(0.0, 0.0, 1.0);
+        let triangle = (
+            Vec3::new(1.0, 0.0, 5.0),
+            Vec3::new(-1.0, 1.0, 5.0),
+            Vec3::new(-1.0, -1.0, 5.0),
+        );
+        let backface_culling = false;
+
+        let result = watertight_ray_triangle_intersection(origin, direction, triangle, backface_culling);
+        assert!(result.is_some());
+        let hit = result.unwrap();
+        assert!(hit.t() > 0.0);
+        assert!((hit.u() + hit.v() + hit.w() - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn internal_test_intersection_some() {
+        let origin = Vec3::new(0.0, 0.0, 0.0);
+        let direction = Vec3::new(0.0, 0.0, 1.0);
+        let triangle = (
+            Vec3::new(-1.0, -1.0, 5.0),
+            Vec3::new(-1.0, 1.0, 5.0),
+            Vec3::new(1.0, 0.0, 5.0),
+        );
+        let backface_culling = true;
+
+        if let Some(hit) = watertight_ray_triangle_intersection(origin, direction, triangle, backface_culling) {
+            let (t, u, v, w) = hit.as_tuple();
+
+            // You can call all values directly:
+            // let t = hit.t();
+            // let u = hit.u();
+            // let v = hit.v();
+            // let w = hit.w();
+
+            println!(
+                "Intersection at t = {}, u = {}, v = {}, w = {}",
+                t, u, v, w
+            );
+            assert!(t > 0.0);
+        } else {
+            panic!("Expected an intersection, but got None");
+        }
+    }
+
+    #[test]
+    fn internal_test_no_intersection() {
+        let origin = Vec3::new(0.0, 0.0, 0.0);
+        let direction = Vec3::new(0.0, 1.0, 0.0); // Ray is parallel to Z axis
+        let triangle = (
+            Vec3::new(1.0, 0.0, 5.0),
+            Vec3::new(-1.0, 1.0, 5.0),
+            Vec3::new(-1.0, -1.0, 5.0),
+        );
+        let backface_culling = true;
+
+        assert!(watertight_ray_triangle_intersection(origin, direction, triangle, backface_culling).is_none());
+    }
 }
